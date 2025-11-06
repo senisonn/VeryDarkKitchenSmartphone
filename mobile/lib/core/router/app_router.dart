@@ -229,8 +229,7 @@ class _ErrorScreen extends StatelessWidget {
   final Exception? error;
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(
         title: const Text('Error'),
       ),
@@ -268,5 +267,4 @@ class _ErrorScreen extends StatelessWidget {
         ),
       ),
     );
-  }
 }
