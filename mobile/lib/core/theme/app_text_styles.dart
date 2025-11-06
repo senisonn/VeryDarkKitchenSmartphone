@@ -20,7 +20,7 @@ class AppTextStyles {
   // Display Styles (Large text)
   static const TextStyle displayLarge = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 57.0,
+    fontSize: 57,
     fontWeight: regular,
     letterSpacing: -0.25,
     height: 1.12,
@@ -78,7 +78,7 @@ class AppTextStyles {
 
   static const TextStyle titleMedium = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 16.0,
+    fontSize: 16,
     fontWeight: medium,
     letterSpacing: 0.15,
     height: 1.50,
@@ -86,7 +86,7 @@ class AppTextStyles {
 
   static const TextStyle titleSmall = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 14.0,
+    fontSize: 14,
     fontWeight: medium,
     letterSpacing: 0.1,
     height: 1.43,
@@ -95,7 +95,7 @@ class AppTextStyles {
   // Body Styles
   static const TextStyle bodyLarge = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 16.0,
+    fontSize: 16,
     fontWeight: regular,
     letterSpacing: 0.5,
     height: 1.50,
@@ -103,7 +103,7 @@ class AppTextStyles {
 
   static const TextStyle bodyMedium = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 14.0,
+    fontSize: 14,
     fontWeight: regular,
     letterSpacing: 0.25,
     height: 1.43,
@@ -111,7 +111,7 @@ class AppTextStyles {
 
   static const TextStyle bodySmall = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 12.0,
+    fontSize: 12,
     fontWeight: regular,
     letterSpacing: 0.4,
     height: 1.33,
@@ -120,7 +120,7 @@ class AppTextStyles {
   // Label Styles (Buttons, etc.)
   static const TextStyle labelLarge = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 14.0,
+    fontSize: 14,
     fontWeight: medium,
     letterSpacing: 0.1,
     height: 1.43,

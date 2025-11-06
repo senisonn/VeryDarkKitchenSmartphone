@@ -1,59 +1,104 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:restaurant_reservation/app.dart';
 import 'package:restaurant_reservation/core/router/route_names.dart';
 import 'package:restaurant_reservation/core/utils/logger.dart';
+import 'package:restaurant_reservation/features/auth/presentation/providers/auth_providers.dart';
+import 'package:restaurant_reservation/features/auth/presentation/screens/login_screen.dart';
+import 'package:restaurant_reservation/features/auth/presentation/screens/profile_screen.dart';
+import 'package:restaurant_reservation/features/auth/presentation/screens/register_screen.dart';
+import 'package:restaurant_reservation/features/menu/presentation/screens/menu_detail_screen.dart';
+import 'package:restaurant_reservation/features/menu/presentation/screens/menu_screen.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'app_router.g.dart';
 
 /// Provides the GoRouter instance for the app.
 @riverpod
-// ignore: prefer_expression_function_bodies
 GoRouter router(RouterRef ref) {
   // Watch auth state to rebuild router when auth changes
-  // This will be implemented when we add the auth provider
-  // final authState = ref.watch(authStateProvider);
+  final authState = ref.watch(authStateProvider);
+  final isAuthenticated = authState.value != null;
 
   return GoRouter(
-    initialLocation: RouteNames.menu,
+    initialLocation: RouteNames.root,
     debugLogDiagnostics: true,
     observers: [_RouterObserver()],
 
     // Redirect logic for auth guards
     redirect: (context, state) {
-      // Get current auth state
-      // For now, we'll allow all routes
-      // This will be updated when auth is implemented
+      final currentLocation = state.matchedLocation;
 
-      final isLoginRoute = state.matchedLocation == RouteNames.login;
-      final isRegisterRoute = state.matchedLocation == RouteNames.register;
-      final isPublicRoute = isLoginRoute ||
-          isRegisterRoute ||
-          state.matchedLocation == RouteNames.menu ||
-          state.matchedLocation.startsWith('/menu/');
+      // Define public routes
+      final publicRoutes = [
+        RouteNames.root,
+        RouteNames.login,
+        RouteNames.register,
+        RouteNames.menu,
+      ];
 
-      // TODO: Implement auth check
-      // final isAuthenticated = authState.isAuthenticated;
+      final isPublicRoute = publicRoutes.contains(currentLocation) ||
+          currentLocation.startsWith('/menu/');
 
-      // Example redirect logic (will be activated with auth):
-      // if (!isAuthenticated && !isPublicRoute) {
-      //   return RouteNames.login;
-      // }
-      // if (isAuthenticated && (isLoginRoute || isRegisterRoute)) {
-      //   return RouteNames.menu;
-      // }
+      // Redirect to login if trying to access protected route while not authenticated
+      if (!isAuthenticated && !isPublicRoute) {
+        return RouteNames.login;
+      }
+
+      // Redirect to home if authenticated user tries to access login/register
+      if (isAuthenticated &&
+          (currentLocation == RouteNames.login ||
+              currentLocation == RouteNames.register)) {
+        return RouteNames.root;
+      }
 
       return null; // No redirect
     },
 
     routes: [
+      // Root - Home Screen
+      GoRoute(
+        path: RouteNames.root,
+        name: 'home',
+        pageBuilder: (context, state) => MaterialPage(
+          key: state.pageKey,
+          child: const HomeScreen(),
+        ),
+      ),
+
+      // Auth Routes
+      GoRoute(
+        path: RouteNames.login,
+        name: 'login',
+        pageBuilder: (context, state) => MaterialPage(
+          key: state.pageKey,
+          child: const LoginScreen(),
+        ),
+      ),
+      GoRoute(
+        path: RouteNames.register,
+        name: 'register',
+        pageBuilder: (context, state) => MaterialPage(
+          key: state.pageKey,
+          child: const RegisterScreen(),
+        ),
+      ),
+      GoRoute(
+        path: RouteNames.profile,
+        name: 'profile',
+        pageBuilder: (context, state) => MaterialPage(
+          key: state.pageKey,
+          child: const ProfileScreen(),
+        ),
+      ),
+
       // Menu Routes (Public)
       GoRoute(
         path: RouteNames.menu,
         name: 'menu',
         pageBuilder: (context, state) => MaterialPage(
           key: state.pageKey,
-          child: const _PlaceholderScreen(title: 'Menu'),
+          child: const MenuScreen(),
         ),
       ),
       GoRoute(
@@ -63,35 +108,9 @@ GoRouter router(RouterRef ref) {
           final id = state.pathParameters['id'] ?? '';
           return MaterialPage(
             key: state.pageKey,
-            child: _PlaceholderScreen(title: 'Menu Item: $id'),
+            child: MenuDetailScreen(itemId: id),
           );
         },
-      ),
-
-      // Auth Routes
-      GoRoute(
-        path: RouteNames.login,
-        name: 'login',
-        pageBuilder: (context, state) => MaterialPage(
-          key: state.pageKey,
-          child: const _PlaceholderScreen(title: 'Login'),
-        ),
-      ),
-      GoRoute(
-        path: RouteNames.register,
-        name: 'register',
-        pageBuilder: (context, state) => MaterialPage(
-          key: state.pageKey,
-          child: const _PlaceholderScreen(title: 'Register'),
-        ),
-      ),
-      GoRoute(
-        path: RouteNames.profile,
-        name: 'profile',
-        pageBuilder: (context, state) => MaterialPage(
-          key: state.pageKey,
-          child: const _PlaceholderScreen(title: 'Profile'),
-        ),
       ),
 
       // Reservation Routes (Protected)
@@ -141,11 +160,7 @@ GoRouter router(RouterRef ref) {
         ),
       ),
 
-      // Root - redirect to menu
-      GoRoute(
-        path: RouteNames.root,
-        redirect: (context, state) => RouteNames.menu,
-      ),
+      // Root - redirect handled by root route above
     ],
 
     // Error handler
