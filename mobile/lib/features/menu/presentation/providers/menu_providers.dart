@@ -106,7 +106,14 @@ class SelectedCategory extends _$SelectedCategory {
 @riverpod
 Future<List<MenuItem>> filteredMenuItems(FilteredMenuItemsRef ref) async {
   final selectedCategoryId = ref.watch(selectedCategoryProvider);
-  return ref.watch(menuItemsByCategoryProvider(selectedCategoryId)).future;
+  final repository = ref.watch(menuRepositoryProvider);
+
+  // If no category selected, return all items
+  if (selectedCategoryId == null) {
+    return repository.getMenuItems();
+  }
+
+  return repository.getMenuItemsByCategory(selectedCategoryId);
 }
 
 // =============================================================================
@@ -132,12 +139,20 @@ class SearchQuery extends _$SearchQuery {
 @riverpod
 Future<List<MenuItem>> displayedMenuItems(DisplayedMenuItemsRef ref) async {
   final searchQuery = ref.watch(searchQueryProvider);
+  final repository = ref.watch(menuRepositoryProvider);
 
   if (searchQuery.trim().isNotEmpty) {
-    return ref.watch(searchMenuItemsProvider(searchQuery)).future;
+    return repository.searchMenuItems(searchQuery);
   }
 
-  return ref.watch(filteredMenuItemsProvider).future;
+  final selectedCategoryId = ref.watch(selectedCategoryProvider);
+
+  // If no category selected, return all items
+  if (selectedCategoryId == null) {
+    return repository.getMenuItems();
+  }
+
+  return repository.getMenuItemsByCategory(selectedCategoryId);
 }
 
 // =============================================================================

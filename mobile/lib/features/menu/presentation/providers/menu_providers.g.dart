@@ -532,7 +532,7 @@ final menuCategoriesProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef MenuCategoriesRef = AutoDisposeFutureProviderRef<List<MenuCategory>>;
-String _$filteredMenuItemsHash() => r'c7a1b5e7f0a3327c69be3c6e863b88f6f28ab100';
+String _$filteredMenuItemsHash() => r'ea015a3c257b685abe33991d41900ccf50a0e402';
 
 /// Provides filtered menu items based on selected category.
 ///
@@ -553,7 +553,7 @@ final filteredMenuItemsProvider =
 // ignore: unused_element
 typedef FilteredMenuItemsRef = AutoDisposeFutureProviderRef<List<MenuItem>>;
 String _$displayedMenuItemsHash() =>
-    r'dc2f5c9fc84ad7ac3784e8450d8ba88979f051b2';
+    r'cf6c3cea7402eff60a849a499a18093f24b18da4';
 
 /// Provides search results or filtered items based on search state.
 ///

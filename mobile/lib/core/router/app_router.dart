@@ -7,8 +7,14 @@ import 'package:restaurant_reservation/features/auth/presentation/providers/auth
 import 'package:restaurant_reservation/features/auth/presentation/screens/login_screen.dart';
 import 'package:restaurant_reservation/features/auth/presentation/screens/profile_screen.dart';
 import 'package:restaurant_reservation/features/auth/presentation/screens/register_screen.dart';
+import 'package:restaurant_reservation/features/back_office/presentation/screens/all_reservations_screen.dart';
+import 'package:restaurant_reservation/features/back_office/presentation/screens/back_office_dashboard_screen.dart';
 import 'package:restaurant_reservation/features/menu/presentation/screens/menu_detail_screen.dart';
 import 'package:restaurant_reservation/features/menu/presentation/screens/menu_screen.dart';
+import 'package:restaurant_reservation/features/reservations/presentation/screens/edit_reservation_screen.dart';
+import 'package:restaurant_reservation/features/reservations/presentation/screens/my_reservations_screen.dart';
+import 'package:restaurant_reservation/features/reservations/presentation/screens/reservation_detail_screen.dart';
+import 'package:restaurant_reservation/features/reservations/presentation/screens/reservation_flow_screen.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'app_router.g.dart';
@@ -119,7 +125,7 @@ GoRouter router(RouterRef ref) {
         name: 'reservations',
         pageBuilder: (context, state) => MaterialPage(
           key: state.pageKey,
-          child: const _PlaceholderScreen(title: 'My Reservations'),
+          child: const MyReservationsScreen(),
         ),
       ),
       GoRoute(
@@ -127,7 +133,7 @@ GoRouter router(RouterRef ref) {
         name: 'newReservation',
         pageBuilder: (context, state) => MaterialPage(
           key: state.pageKey,
-          child: const _PlaceholderScreen(title: 'New Reservation'),
+          child: const ReservationFlowScreen(),
         ),
       ),
       GoRoute(
@@ -137,7 +143,18 @@ GoRouter router(RouterRef ref) {
           final id = state.pathParameters['id'] ?? '';
           return MaterialPage(
             key: state.pageKey,
-            child: _PlaceholderScreen(title: 'Reservation: $id'),
+            child: ReservationDetailScreen(reservationId: id),
+          );
+        },
+      ),
+      GoRoute(
+        path: RouteNames.editReservation,
+        name: 'editReservation',
+        pageBuilder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          return MaterialPage(
+            key: state.pageKey,
+            child: EditReservationScreen(reservationId: id),
           );
         },
       ),
@@ -148,7 +165,7 @@ GoRouter router(RouterRef ref) {
         name: 'backOffice',
         pageBuilder: (context, state) => MaterialPage(
           key: state.pageKey,
-          child: const _PlaceholderScreen(title: 'Back Office'),
+          child: const BackOfficeDashboardScreen(),
         ),
       ),
       GoRoute(
@@ -156,7 +173,7 @@ GoRouter router(RouterRef ref) {
         name: 'backOfficeReservations',
         pageBuilder: (context, state) => MaterialPage(
           key: state.pageKey,
-          child: const _PlaceholderScreen(title: 'All Reservations'),
+          child: const AllReservationsScreen(),
         ),
       ),
 

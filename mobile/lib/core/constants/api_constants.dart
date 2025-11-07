@@ -44,10 +44,14 @@ class ApiConstants {
   static String refuseReservation(String id) => '/reservations/$id/refuse';
 
   // Back Office Endpoints
-  static const String allReservations = '/back-office/reservations';
-  static const String reservationStats = '/back-office/stats';
-  static String reservationDetails(String id) =>
+  static const String adminReservations = '/back-office/reservations';
+  static const String adminStats = '/back-office/stats';
+  static String adminReservationDetails(String id) =>
       '/back-office/reservations/$id';
+  static String adminValidateReservation(String id) =>
+      '/back-office/reservations/$id/validate';
+  static String adminRefuseReservation(String id) =>
+      '/back-office/reservations/$id/refuse';
 
   // Headers
   static const String authHeader = 'Authorization';
