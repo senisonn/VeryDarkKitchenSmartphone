@@ -1,30 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:restaurant_reservation/app.dart';
-import 'package:restaurant_reservation/core/utils/logger.dart';
+import 'screens/menu_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/register_screen.dart';
+import 'screens/reservation_screen.dart';
 
-/// Application entry point.
-///
-/// Initializes the app and sets up error handling.
 void main() {
-  // Catch and log any errors during initialization
-  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const MyApp());
+}
 
-  // Set up error handlers
-  FlutterError.onError = (FlutterErrorDetails details) {
-    AppLogger.fatal(
-      'Flutter error',
-      error: details.exception,
-      stackTrace: details.stack,
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Very Dark Kitchen',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
+        useMaterial3: true,
+      ),
+      initialRoute: '/menu',
+      routes: {
+        '/menu': (context) => const MenuScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/register': (context) => const RegisterScreen(),
+        '/reservation': (context) => const ReservationScreen(),
+      },
     );
-  };
-
-  // Run the app wrapped in ProviderScope for Riverpod
-  runApp(
-    const ProviderScope(
-      child: RestaurantApp(),
-    ),
-  );
-
-  AppLogger.info('Restaurant Reservation App started');
+  }
 }
