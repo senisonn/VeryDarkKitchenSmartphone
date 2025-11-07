@@ -60,5 +60,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         
         filterChain.doFilter(request, response);
     }
-}
 
+    // IGNORE JWT FILTER FOR PUBLIC AUTH ENDPOINTS (so register/login are accessible without token)
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+        // Skip filtering for authentication endpoints
+        if (path.startsWith("/api/auth")) {
+            return true;
+        }
+        return false;
+    }
+}
