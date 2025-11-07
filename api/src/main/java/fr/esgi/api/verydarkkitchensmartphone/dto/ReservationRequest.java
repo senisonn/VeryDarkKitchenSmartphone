@@ -10,7 +10,7 @@ import java.util.List;
 public class ReservationRequest {
 
     @NotBlank
-    private String nomClient;
+    private Long idClient;
 
     @NotBlank
     @Email
