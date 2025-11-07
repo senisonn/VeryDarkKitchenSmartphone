@@ -42,6 +42,11 @@ public class ReservationController {
         return ResponseEntity.ok(reservationService.getReservationsByEmail(email));
     }
 
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<ReservationResponse>> getReservationsByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(reservationService.getReservationByUserId(userId));
+    }
+
     @PutMapping("/{id}/statut")
     public ResponseEntity<ReservationResponse> updateStatut(
             @PathVariable Long id,

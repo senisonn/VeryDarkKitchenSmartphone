@@ -6,8 +6,10 @@ import fr.esgi.api.verydarkkitchensmartphone.dto.ReservationResponse;
 import fr.esgi.api.verydarkkitchensmartphone.models.Plat;
 import fr.esgi.api.verydarkkitchensmartphone.models.Reservation;
 import fr.esgi.api.verydarkkitchensmartphone.models.StatutReservation;
+import fr.esgi.api.verydarkkitchensmartphone.models.User;
 import fr.esgi.api.verydarkkitchensmartphone.repository.PlatRepository;
 import fr.esgi.api.verydarkkitchensmartphone.repository.ReservationRepository;
+import fr.esgi.api.verydarkkitchensmartphone.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,12 +25,13 @@ public class ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final PlatRepository platRepository;
+    private final UserRepository userRepository;
 
     public ReservationResponse createReservation(ReservationRequest request) {
         List<Plat> plats = platRepository.findAllById(request.getPlatIds());
 
         Reservation reservation = Reservation.builder()
-                .nomClient(request.getNomClient())
+                .user(userRepository.findById(request.getIdClient()).orElse(null))
                 .email(request.getEmail())
                 .telephone(request.getTelephone())
                 .dateReservation(request.getDateReservation())
@@ -61,6 +64,11 @@ public class ReservationService {
                 .collect(Collectors.toList());
     }
 
+    public List<ReservationResponse> getReservationByUserId(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow();
+        return reservationRepository.findByUser(user).stream().map(this::convertToResponse).collect(Collectors.toList());
+    }
+
     public ReservationResponse updateStatut(Long id, String statut) {
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Réservation non trouvée"));
@@ -88,7 +96,7 @@ public class ReservationService {
 
         return ReservationResponse.builder()
                 .id(reservation.getId())
-                .nomClient(reservation.getNomClient())
+                .idClient(reservation.getUser().getId())
                 .email(reservation.getEmail())
                 .telephone(reservation.getTelephone())
                 .dateReservation(reservation.getDateReservation())

@@ -8,7 +8,7 @@ import java.util.List;
 @Builder
 public class ReservationResponse {
     private Long id;
-    private String nomClient;
+    private Long idClient;
     private String email;
     private String telephone;
     private LocalDateTime dateReservation;

@@ -20,8 +20,9 @@ public class Reservation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Le nom du client est obligatoire")
-    private String nomClient;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @NotBlank(message = "L'email est obligatoire")
     @Email(message = "Format d'email invalide")
