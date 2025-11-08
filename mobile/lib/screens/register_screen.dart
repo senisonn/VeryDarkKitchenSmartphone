@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import '../services/api_service.dart';
 import '../models/auth.dart';
 
@@ -51,20 +52,20 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
     if (!_formKey.currentState!.validate()) return;
 
     if (_passwordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Row(
-            children: [
-              Icon(Icons.error_outline, color: Colors.white),
-              SizedBox(width: 12),
-              Text('Les mots de passe ne correspondent pas'),
-            ],
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.error_outline, color: Theme.of(context).colorScheme.onTertiary),
+                const SizedBox(width: 12),
+                const Text('Les mots de passe ne correspondent pas'),
+              ],
+            ),
+            backgroundColor: AppTheme.warning(context),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusSmall)),
           ),
-          backgroundColor: Colors.orange,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
+        );
       return;
     }
 
@@ -81,16 +82,16 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
         Navigator.pushReplacementNamed(context, '/menu');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Row(
+            content: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 12),
-                Text('Inscription réussie !'),
+                Icon(Icons.check_circle, color: Theme.of(context).colorScheme.onSecondary),
+                const SizedBox(width: 12),
+                const Text('Inscription réussie !'),
               ],
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.success(context),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusSmall)),
           ),
         );
       }
@@ -100,14 +101,14 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.error_outline, color: Colors.white),
+                Icon(Icons.error_outline, color: Theme.of(context).colorScheme.onError),
                 const SizedBox(width: 12),
                 Expanded(child: Text(e.toString().replaceFirst('Exception: ', ''))),
               ],
             ),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.danger(context),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusSmall)),
           ),
         );
       }
@@ -186,7 +187,7 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                     Card(
                       elevation: 8,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(24),
@@ -203,7 +204,7 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                                   hintText: 'Choisissez un nom d\'utilisateur',
                                   prefixIcon: const Icon(Icons.person_outline),
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(AppTheme.radius),
                                   ),
                                   filled: true,
                                   fillColor: colorScheme.surfaceContainerHighest,
@@ -233,7 +234,7 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                                   hintText: 'votre@email.com',
                                   prefixIcon: const Icon(Icons.email_outlined),
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(AppTheme.radius),
                                   ),
                                   filled: true,
                                   fillColor: colorScheme.surfaceContainerHighest,
@@ -270,7 +271,7 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                                     },
                                   ),
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(AppTheme.radius),
                                   ),
                                   filled: true,
                                   fillColor: colorScheme.surfaceContainerHighest,
@@ -308,7 +309,7 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                                     },
                                   ),
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(AppTheme.radius),
                                   ),
                                   filled: true,
                                   fillColor: colorScheme.surfaceContainerHighest,
@@ -330,16 +331,16 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                                 style: FilledButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(vertical: 16),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(AppTheme.radius),
                                   ),
                                 ),
                                 child: _isLoading
-                                    ? const SizedBox(
+                                    ? SizedBox(
                                         height: 20,
                                         width: 20,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          color: Colors.white,
+                                          color: Theme.of(context).colorScheme.onPrimary,
                                         ),
                                       )
                                     : const Text(

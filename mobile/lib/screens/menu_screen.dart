@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import '../models/plat.dart';
@@ -112,7 +113,7 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
               Text('Veuillez vous connecter pour réserver'),
             ],
           ),
-          backgroundColor: Colors.orange,
+          backgroundColor: AppTheme.warning(context),
           behavior: SnackBarBehavior.floating,
           action: SnackBarAction(
             label: 'Connexion',
@@ -127,14 +128,14 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
     if (_selectedPlats.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Row(
+          content: Row(
             children: [
-              Icon(Icons.info_outline, color: Colors.white),
-              SizedBox(width: 12),
-              Text('Sélectionnez au moins un plat'),
+              Icon(Icons.info_outline, color: Theme.of(context).colorScheme.onPrimary),
+              const SizedBox(width: 12),
+              const Text('Sélectionnez au moins un plat'),
             ],
           ),
-          backgroundColor: Colors.blue,
+          backgroundColor: Theme.of(context).colorScheme.primary,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -250,12 +251,12 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
           if (_selectedPlats.isNotEmpty)
             SliverToBoxAdapter(
               child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.all(AppTheme.padding),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(AppTheme.radius),
+                    ),
                 child: Row(
                   children: [
                     Icon(Icons.shopping_bag, color: colorScheme.primary),
@@ -364,16 +365,16 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
     final colorScheme = theme.colorScheme;
 
     return Card(
-      elevation: isSelected ? 8 : 2,
+      elevation: isSelected ? AppTheme.cardElevation * 2 : AppTheme.cardElevation,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
         side: isSelected
             ? BorderSide(color: colorScheme.primary, width: 2)
             : BorderSide.none,
       ),
       child: InkWell(
         onTap: () => _togglePlatSelection(plat),
-        borderRadius: BorderRadius.circular(16),
+  borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -390,15 +391,15 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                       colorScheme.secondaryContainer,
                     ],
                   ),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusLarge)),
                 ),
                 child: Stack(
                   children: [
                     Center(
-                      child: Icon(
+                        child: Icon(
                         _categoryIcons[plat.categorie] ?? Icons.restaurant,
                         size: 48,
-                        color: Colors.white.withValues(alpha: 0.5),
+                        color: Colors.white.withOpacity(0.5),
                       ),
                     ),
                     if (isSelected)
@@ -427,11 +428,11 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                               top: Radius.circular(16),
                             ),
                           ),
-                          child: const Center(
+                          child: Center(
                             child: Chip(
-                              label: Text('Indisponible'),
-                              backgroundColor: Colors.red,
-                              labelStyle: TextStyle(color: Colors.white),
+                              label: const Text('Indisponible'),
+                              backgroundColor: Theme.of(context).colorScheme.error,
+                              labelStyle: TextStyle(color: Theme.of(context).colorScheme.onError),
                             ),
                           ),
                         ),
@@ -497,7 +498,7 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Colors.deepOrange, Colors.orangeAccent],
+                colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.primaryContainer],
               ),
             ),
             child: const Column(

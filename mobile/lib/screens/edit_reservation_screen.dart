@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import 'package:intl/intl.dart';
 import '../models/reservation.dart';
 import '../services/api_service.dart';
@@ -126,10 +127,10 @@ class _EditReservationScreenState extends State<EditReservationScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Modifier la Réservation'),
-        backgroundColor: Colors.deepOrange,
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(AppTheme.padding),
         child: Form(
           key: _formKey,
           child: Column(
@@ -274,13 +275,23 @@ class _EditReservationScreenState extends State<EditReservationScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _updateReservation,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepOrange,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radius),
+                    ),
                   ),
                   child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
+                      ? SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                        )
+                      : Text(
                           'Mettre à jour',
-                          style: TextStyle(fontSize: 18, color: Colors.white),
+                          style: TextStyle(fontSize: 18, color: Theme.of(context).colorScheme.onPrimary),
                         ),
                 ),
               ),

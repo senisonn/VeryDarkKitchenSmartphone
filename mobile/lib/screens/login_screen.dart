@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import '../services/api_service.dart';
 import '../services/debug_service.dart';
 import '../models/auth.dart';
@@ -65,16 +66,16 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         Navigator.pushReplacementNamed(context, '/menu');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Row(
+            content: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 12),
-                Text('Connexion réussie !'),
+                Icon(Icons.check_circle, color: Theme.of(context).colorScheme.onSecondary),
+                const SizedBox(width: 12),
+                const Text('Connexion réussie !'),
               ],
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.success(context),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusSmall)),
           ),
         );
       }
@@ -84,14 +85,14 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.error_outline, color: Colors.white),
+                Icon(Icons.error_outline, color: Theme.of(context).colorScheme.onError),
                 const SizedBox(width: 12),
                 Expanded(child: Text(e.toString().replaceFirst('Exception: ', ''))),
               ],
             ),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.danger(context),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusSmall)),
           ),
         );
       }
@@ -130,21 +131,21 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                color: Theme.of(context).colorScheme.onPrimary,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
+                            color: Colors.black.withOpacity(0.1),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
                           ),
                         ],
                       ),
-                      child: Icon(
-                        Icons.restaurant_menu,
-                        size: 60,
-                        color: colorScheme.primary,
-                      ),
+                                child: Icon(
+                                  Icons.restaurant_menu,
+                                  size: 60,
+                                  color: colorScheme.primary,
+                                ),
                     ),
                     const SizedBox(height: 32),
 
@@ -170,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     Card(
                       elevation: 8,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(24),
@@ -187,7 +188,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                   hintText: 'Entrez votre nom d\'utilisateur',
                                   prefixIcon: const Icon(Icons.person_outline),
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(AppTheme.radius),
                                   ),
                                   filled: true,
                                   fillColor: colorScheme.surfaceContainerHighest,
@@ -221,7 +222,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                     },
                                   ),
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(AppTheme.radius),
                                   ),
                                   filled: true,
                                   fillColor: colorScheme.surfaceContainerHighest,
@@ -243,16 +244,16 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                 style: FilledButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(vertical: 16),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(AppTheme.radius),
                                   ),
                                 ),
-                                child: _isLoading
-                                    ? const SizedBox(
+                                        child: _isLoading
+                                    ? SizedBox(
                                         height: 20,
                                         width: 20,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          color: Colors.white,
+                                          color: Theme.of(context).colorScheme.onPrimary,
                                         ),
                                       )
                                     : const Text(
@@ -270,7 +271,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
                                     color: Colors.blue.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                                     border: Border.all(
                                       color: Colors.blue.withValues(alpha: 0.3),
                                     ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import 'package:intl/intl.dart';
 import '../models/reservation.dart';
 import '../services/api_service.dart';
@@ -45,9 +46,9 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
       await _apiService.approveReservation(reservationId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Réservation approuvée'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: Text('Réservation approuvée', style: TextStyle(color: Theme.of(context).colorScheme.onSecondary)),
+            backgroundColor: AppTheme.success(context),
           ),
         );
       }
@@ -66,9 +67,9 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
       await _apiService.rejectReservation(reservationId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Réservation rejetée'),
-            backgroundColor: Colors.red,
+          SnackBar(
+            content: Text('Réservation rejetée', style: TextStyle(color: Theme.of(context).colorScheme.onError)),
+            backgroundColor: AppTheme.danger(context),
           ),
         );
       }
@@ -159,7 +160,7 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gestion des Réservations'),
-        backgroundColor: Colors.deepOrange,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -174,10 +175,10 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.check_circle_outline,
                         size: 64,
-                        color: Colors.green,
+                        color: Theme.of(context).colorScheme.secondary,
                       ),
                       const SizedBox(height: 16),
                       const Text(
@@ -190,7 +191,7 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                         icon: const Icon(Icons.refresh),
                         label: const Text('Actualiser'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepOrange,
+                          backgroundColor: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                     ],
@@ -230,13 +231,13 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                                       vertical: 6,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.orange,
-                                      borderRadius: BorderRadius.circular(20),
+                                      color: Theme.of(context).colorScheme.primaryContainer,
+                                      borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
                                     ),
-                                    child: const Text(
+                                    child: Text(
                                       'En attente',
                                       style: TextStyle(
-                                        color: Colors.white,
+                                        color: Theme.of(context).colorScheme.onPrimaryContainer,
                                         fontSize: 12,
                                       ),
                                     ),
@@ -292,7 +293,7 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                                     icon: const Icon(Icons.info_outline),
                                     label: const Text('Détails'),
                                     style: OutlinedButton.styleFrom(
-                                      foregroundColor: Colors.blue,
+                                      foregroundColor: Theme.of(context).colorScheme.primary,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -302,8 +303,8 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                                     icon: const Icon(Icons.close),
                                     label: const Text('Refuser'),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red,
-                                      foregroundColor: Colors.white,
+                                      backgroundColor: AppTheme.danger(context),
+                                      foregroundColor: Theme.of(context).colorScheme.onError,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -313,8 +314,8 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                                     icon: const Icon(Icons.check),
                                     label: const Text('Approuver'),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.green,
-                                      foregroundColor: Colors.white,
+                                      backgroundColor: AppTheme.success(context),
+                                      foregroundColor: Theme.of(context).colorScheme.onSecondary,
                                     ),
                                   ),
                                 ],
