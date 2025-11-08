@@ -236,7 +236,7 @@ class MockApiService {
 
     final response = ReservationResponse(
       id: reservationId,
-      idClient: request.idClient,
+      userId: request.idClient,  // Changed from idClient to userId
       email: request.email,
       telephone: request.telephone,
       dateReservation: request.dateReservation,

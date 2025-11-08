@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../services/mock_api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/api_service.dart';
 import '../models/plat.dart';
 
 class MenuScreen extends StatefulWidget {
@@ -9,17 +10,56 @@ class MenuScreen extends StatefulWidget {
   State<MenuScreen> createState() => _MenuScreenState();
 }
 
-class _MenuScreenState extends State<MenuScreen> {
-  final _apiService = MockApiService();
+class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateMixin {
+  final _apiService = ApiService();
   List<Plat> _plats = [];
-  List<Plat> _selectedPlats = [];
+  final List<Plat> _selectedPlats = [];
   bool _isLoading = true;
   String? _error;
+  String? _userRole;
+  String _selectedCategory = 'Tous';
+  late AnimationController _fabAnimationController;
+
+  final List<String> _categories = ['Tous', 'ENTREE', 'PLAT_PRINCIPAL', 'DESSERT', 'BOISSON'];
+
+  final Map<String, String> _categoryLabels = {
+    'Tous': 'Tous',
+    'ENTREE': 'Entrées',
+    'PLAT_PRINCIPAL': 'Plats',
+    'DESSERT': 'Desserts',
+    'BOISSON': 'Boissons',
+  };
+
+  final Map<String, IconData> _categoryIcons = {
+    'Tous': Icons.restaurant_menu,
+    'ENTREE': Icons.soup_kitchen,
+    'PLAT_PRINCIPAL': Icons.dinner_dining,
+    'DESSERT': Icons.cake,
+    'BOISSON': Icons.local_cafe,
+  };
 
   @override
   void initState() {
     super.initState();
+    _fabAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
     _loadMenu();
+    _loadUserRole();
+  }
+
+  @override
+  void dispose() {
+    _fabAnimationController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userRole = prefs.getString('role') ?? 'USER';
+    });
   }
 
   Future<void> _loadMenu() async {
@@ -46,7 +86,13 @@ class _MenuScreenState extends State<MenuScreen> {
     setState(() {
       if (_selectedPlats.contains(plat)) {
         _selectedPlats.remove(plat);
+        if (_selectedPlats.isEmpty) {
+          _fabAnimationController.reverse();
+        }
       } else {
+        if (_selectedPlats.isEmpty) {
+          _fabAnimationController.forward();
+        }
         _selectedPlats.add(plat);
       }
     });
@@ -58,18 +104,38 @@ class _MenuScreenState extends State<MenuScreen> {
 
     if (!isLoggedIn) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Veuillez vous connecter pour faire une réservation'),
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.lock_outline, color: Colors.white),
+              SizedBox(width: 12),
+              Text('Veuillez vous connecter pour réserver'),
+            ],
+          ),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(
+            label: 'Connexion',
+            textColor: Colors.white,
+            onPressed: () => Navigator.pushNamed(context, '/login'),
+          ),
         ),
       );
-      Navigator.pushNamed(context, '/login');
       return;
     }
 
     if (_selectedPlats.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Veuillez sélectionner au moins un plat'),
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.white),
+              SizedBox(width: 12),
+              Text('Sélectionnez au moins un plat'),
+            ],
+          ),
+          backgroundColor: Colors.blue,
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
@@ -82,145 +148,419 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 
+  List<Plat> get _filteredPlats {
+    if (_selectedCategory == 'Tous') {
+      return _plats;
+    }
+    return _plats.where((plat) => plat.categorie == _selectedCategory).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Menu du Restaurant'),
-        backgroundColor: Colors.deepOrange,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () => Navigator.pushNamed(context, '/login'),
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error, size: 64, color: Colors.red),
-                      const SizedBox(height: 16),
-                      Text('Erreur: $_error'),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadMenu,
-                        child: const Text('Réessayer'),
-                      ),
+      body: CustomScrollView(
+        slivers: [
+          // Modern App Bar
+          SliverAppBar.large(
+            floating: true,
+            pinned: true,
+            expandedHeight: 120,
+            backgroundColor: colorScheme.primary,
+            foregroundColor: Colors.white,
+            flexibleSpace: FlexibleSpaceBar(
+              title: const Text(
+                'Very Dark Kitchen',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              background: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      colorScheme.primary,
+                      colorScheme.primaryContainer,
                     ],
                   ),
-                )
-              : _plats.isEmpty
-                  ? const Center(
-                      child: Text('Aucun plat disponible'),
-                    )
-                  : Column(
-                      children: [
-                        if (_selectedPlats.isNotEmpty)
-                          Container(
-                            color: Colors.deepOrange.shade50,
-                            padding: const EdgeInsets.all(8),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    '${_selectedPlats.length} plat(s) sélectionné(s)',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                ElevatedButton.icon(
-                                  onPressed: _navigateToReservation,
-                                  icon: const Icon(Icons.restaurant_menu),
-                                  label: const Text('Réserver'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.deepOrange,
-                                  ),
-                                ),
-                              ],
+                ),
+              ),
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.event),
+                tooltip: 'Mes réservations',
+                onPressed: () => Navigator.pushNamed(context, '/my-reservations'),
+              ),
+              IconButton(
+                icon: const Icon(Icons.person),
+                tooltip: 'Mon profil',
+                onPressed: () => Navigator.pushNamed(context, '/profile'),
+              ),
+            ],
+          ),
+
+          // Category Filters
+          SliverToBoxAdapter(
+            child: Container(
+              height: 60,
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: _categories.length,
+                itemBuilder: (context, index) {
+                  final category = _categories[index];
+                  final isSelected = _selectedCategory == category;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: FilterChip(
+                      selected: isSelected,
+                      label: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _categoryIcons[category],
+                            size: 18,
+                            color: isSelected ? Colors.white : colorScheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(_categoryLabels[category]!),
+                        ],
+                      ),
+                      onSelected: (selected) {
+                        setState(() => _selectedCategory = category);
+                      },
+                      backgroundColor: colorScheme.surface,
+                      selectedColor: colorScheme.primary,
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.white : colorScheme.onSurface,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+
+          // Selected Items Summary
+          if (_selectedPlats.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.shopping_bag, color: colorScheme.primary),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        '${_selectedPlats.length} plat${_selectedPlats.length > 1 ? 's' : ''} sélectionné${_selectedPlats.length > 1 ? 's' : ''}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                    if (_selectedPlats.isNotEmpty)
+                      TextButton.icon(
+                        onPressed: () {
+                          setState(() => _selectedPlats.clear());
+                          _fabAnimationController.reverse();
+                        },
+                        icon: const Icon(Icons.clear),
+                        label: const Text('Vider'),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+
+          // Content
+          if (_isLoading)
+            const SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_error != null)
+            SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, size: 64, color: colorScheme.error),
+                    const SizedBox(height: 16),
+                    Text('Erreur de chargement', style: theme.textTheme.titleLarge),
+                    const SizedBox(height: 8),
+                    Text(_error!, textAlign: TextAlign.center),
+                    const SizedBox(height: 24),
+                    FilledButton.icon(
+                      onPressed: _loadMenu,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Réessayer'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else if (_filteredPlats.isEmpty)
+            SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.restaurant, size: 64, color: Colors.grey[400]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Aucun plat dans cette catégorie',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.all(16),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.75,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final plat = _filteredPlats[index];
+                    final isSelected = _selectedPlats.contains(plat);
+                    return _buildPlatCard(plat, isSelected);
+                  },
+                  childCount: _filteredPlats.length,
+                ),
+              ),
+            ),
+        ],
+      ),
+      floatingActionButton: ScaleTransition(
+        scale: _fabAnimationController,
+        child: FloatingActionButton.extended(
+          onPressed: _navigateToReservation,
+          icon: const Icon(Icons.restaurant),
+          label: Text('Réserver (${_selectedPlats.length})'),
+        ),
+      ),
+      drawer: _buildDrawer(),
+    );
+  }
+
+  Widget _buildPlatCard(Plat plat, bool isSelected) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      elevation: isSelected ? 8 : 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: isSelected
+            ? BorderSide(color: colorScheme.primary, width: 2)
+            : BorderSide.none,
+      ),
+      child: InkWell(
+        onTap: () => _togglePlatSelection(plat),
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image or placeholder
+            Expanded(
+              flex: 3,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      colorScheme.primaryContainer,
+                      colorScheme.secondaryContainer,
+                    ],
+                  ),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                ),
+                child: Stack(
+                  children: [
+                    Center(
+                      child: Icon(
+                        _categoryIcons[plat.categorie] ?? Icons.restaurant,
+                        size: 48,
+                        color: Colors.white.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    if (isSelected)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.check,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    if (!plat.disponible)
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.5),
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(16),
                             ),
                           ),
-                        Expanded(
-                          child: RefreshIndicator(
-                            onRefresh: _loadMenu,
-                            child: ListView.builder(
-                              itemCount: _plats.length,
-                              padding: const EdgeInsets.all(8),
-                              itemBuilder: (context, index) {
-                                final plat = _plats[index];
-                                final isSelected = _selectedPlats.contains(plat);
-
-                                return Card(
-                                  elevation: 2,
-                                  margin: const EdgeInsets.symmetric(
-                                    vertical: 8,
-                                    horizontal: 4,
-                                  ),
-                                  child: ListTile(
-                                    leading: CircleAvatar(
-                                      backgroundColor: Colors.deepOrange,
-                                      child: Text(
-                                        plat.prix.toStringAsFixed(0),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    title: Text(
-                                      plat.nom,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    subtitle: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        const SizedBox(height: 4),
-                                        Text(plat.description),
-                                        const SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            Chip(
-                                              label: Text(
-                                                plat.categorie,
-                                                style: const TextStyle(fontSize: 12),
-                                              ),
-                                              backgroundColor:
-                                                  Colors.deepOrange.shade100,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              '${plat.prix.toStringAsFixed(2)} €',
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                    trailing: Checkbox(
-                                      value: isSelected,
-                                      onChanged: plat.disponible
-                                          ? (_) => _togglePlatSelection(plat)
-                                          : null,
-                                    ),
-                                    enabled: plat.disponible,
-                                    isThreeLine: true,
-                                  ),
-                                );
-                              },
+                          child: const Center(
+                            child: Chip(
+                              label: Text('Indisponible'),
+                              backgroundColor: Colors.red,
+                              labelStyle: TextStyle(color: Colors.white),
                             ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            // Info
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      plat.nom,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      plat.description,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Spacer(),
+                    Row(
+                      children: [
+                        Text(
+                          '${plat.prix.toStringAsFixed(2)} €',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
                     ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawer() {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Colors.deepOrange, Colors.orangeAccent],
+              ),
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Icon(Icons.restaurant, size: 48, color: Colors.white),
+                SizedBox(height: 8),
+                Text(
+                  'Very Dark Kitchen',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.restaurant_menu),
+            title: const Text('Menu'),
+            onTap: () => Navigator.pop(context),
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.person),
+            title: const Text('Mon Profil'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/profile');
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.event),
+            title: const Text('Mes Réservations'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/my-reservations');
+            },
+          ),
+          if (_userRole == 'ADMIN') ...[
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.admin_panel_settings),
+              title: const Text('Gestion Réservations'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/admin-reservations');
+              },
+            ),
+          ],
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.login),
+            title: const Text('Connexion'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/login');
+            },
+          ),
+        ],
+      ),
     );
   }
 }

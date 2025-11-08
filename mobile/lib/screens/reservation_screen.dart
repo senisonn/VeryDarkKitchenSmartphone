@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../services/mock_api_service.dart';
+import '../services/api_service.dart';
 import '../models/reservation.dart';
 
 class ReservationScreen extends StatefulWidget {
@@ -15,7 +15,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
   final _emailController = TextEditingController();
   final _telephoneController = TextEditingController();
   final _commentaireController = TextEditingController();
-  final _apiService = MockApiService();
+  final _apiService = ApiService();
 
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
   TimeOfDay _selectedTime = const TimeOfDay(hour: 12, minute: 0);
