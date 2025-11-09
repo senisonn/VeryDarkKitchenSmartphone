@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import '../models/plat.dart';
+import '../widgets/loading_shimmer.dart';
+import '../widgets/empty_state.dart';
+import '../widgets/custom_snackbar.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -11,7 +15,8 @@ class MenuScreen extends StatefulWidget {
   State<MenuScreen> createState() => _MenuScreenState();
 }
 
-class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateMixin {
+class _MenuScreenState extends State<MenuScreen>
+    with SingleTickerProviderStateMixin {
   final _apiService = ApiService();
   List<Plat> _plats = [];
   final List<Plat> _selectedPlats = [];
@@ -21,7 +26,13 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
   String _selectedCategory = 'Tous';
   late AnimationController _fabAnimationController;
 
-  final List<String> _categories = ['Tous', 'ENTREE', 'PLAT_PRINCIPAL', 'DESSERT', 'BOISSON'];
+  final List<String> _categories = [
+    'Tous',
+    'ENTREE',
+    'PLAT_PRINCIPAL',
+    'DESSERT',
+    'BOISSON',
+  ];
 
   final Map<String, String> _categoryLabels = {
     'Tous': 'Tous',
@@ -104,41 +115,21 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
     if (!mounted) return;
 
     if (!isLoggedIn) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Row(
-            children: [
-              Icon(Icons.lock_outline, color: Colors.white),
-              SizedBox(width: 12),
-              Text('Veuillez vous connecter pour réserver'),
-            ],
-          ),
-          backgroundColor: AppTheme.warning(context),
-          behavior: SnackBarBehavior.floating,
-          action: SnackBarAction(
-            label: 'Connexion',
-            textColor: Colors.white,
-            onPressed: () => Navigator.pushNamed(context, '/login'),
-          ),
+      CustomSnackbar.show(
+        context,
+        message: 'Veuillez vous connecter pour réserver',
+        type: SnackbarType.warning,
+        action: SnackBarAction(
+          label: 'Connexion',
+          textColor: Colors.white,
+          onPressed: () => Navigator.pushNamed(context, '/login'),
         ),
       );
       return;
     }
 
     if (_selectedPlats.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.info_outline, color: Theme.of(context).colorScheme.onPrimary),
-              const SizedBox(width: 12),
-              const Text('Sélectionnez au moins un plat'),
-            ],
-          ),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      CustomSnackbar.info(context, 'Sélectionnez au moins un plat');
       return;
     }
 
@@ -168,13 +159,16 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
           SliverAppBar.large(
             floating: true,
             pinned: true,
-            expandedHeight: 120,
+            expandedHeight: 140,
             backgroundColor: colorScheme.primary,
             foregroundColor: Colors.white,
             flexibleSpace: FlexibleSpaceBar(
               title: const Text(
                 'Very Dark Kitchen',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
               ),
               background: Container(
                 decoration: BoxDecoration(
@@ -183,8 +177,15 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                     end: Alignment.bottomRight,
                     colors: [
                       colorScheme.primary,
-                      colorScheme.primaryContainer,
+                      colorScheme.primary.withValues(alpha: 0.8),
                     ],
+                  ),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.restaurant,
+                    size: 80,
+                    color: Colors.white.withValues(alpha: 0.1),
                   ),
                 ),
               ),
@@ -193,7 +194,8 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
               IconButton(
                 icon: const Icon(Icons.event),
                 tooltip: 'Mes réservations',
-                onPressed: () => Navigator.pushNamed(context, '/my-reservations'),
+                onPressed: () =>
+                    Navigator.pushNamed(context, '/my-reservations'),
               ),
               IconButton(
                 icon: const Icon(Icons.person),
@@ -207,10 +209,12 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
           SliverToBoxAdapter(
             child: Container(
               height: 60,
-              margin: const EdgeInsets.symmetric(vertical: 8),
+              margin: const EdgeInsets.symmetric(vertical: AppTheme.spaceSm),
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppTheme.spaceMd,
+                ),
                 itemCount: _categories.length,
                 itemBuilder: (context, index) {
                   final category = _categories[index];
@@ -225,7 +229,9 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                           Icon(
                             _categoryIcons[category],
                             size: 18,
-                            color: isSelected ? Colors.white : colorScheme.primary,
+                            color: isSelected
+                                ? Colors.white
+                                : colorScheme.primary,
                           ),
                           const SizedBox(width: 8),
                           Text(_categoryLabels[category]!),
@@ -237,8 +243,12 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                       backgroundColor: colorScheme.surface,
                       selectedColor: colorScheme.primary,
                       labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : colorScheme.onSurface,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected
+                            ? Colors.white
+                            : colorScheme.onSurface,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                       ),
                     ),
                   );
@@ -251,12 +261,15 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
           if (_selectedPlats.isNotEmpty)
             SliverToBoxAdapter(
               child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    padding: const EdgeInsets.all(AppTheme.padding),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(AppTheme.radius),
-                    ),
+                margin: const EdgeInsets.symmetric(
+                  horizontal: AppTheme.spaceMd,
+                  vertical: AppTheme.spaceSm,
+                ),
+                padding: const EdgeInsets.all(AppTheme.spaceMd),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                ),
                 child: Row(
                   children: [
                     Icon(Icons.shopping_bag, color: colorScheme.primary),
@@ -286,64 +299,43 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
 
           // Content
           if (_isLoading)
-            const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator()),
-            )
+            const SliverFillRemaining(child: MenuGridShimmer())
           else if (_error != null)
             SliverFillRemaining(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline, size: 64, color: colorScheme.error),
-                    const SizedBox(height: 16),
-                    Text('Erreur de chargement', style: theme.textTheme.titleLarge),
-                    const SizedBox(height: 8),
-                    Text(_error!, textAlign: TextAlign.center),
-                    const SizedBox(height: 24),
-                    FilledButton.icon(
-                      onPressed: _loadMenu,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Réessayer'),
-                    ),
-                  ],
-                ),
-              ),
+              child: ErrorState(message: _error!, onRetry: _loadMenu),
             )
           else if (_filteredPlats.isEmpty)
             SliverFillRemaining(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.restaurant, size: 64, color: Colors.grey[400]),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Aucun plat dans cette catégorie',
-                      style: theme.textTheme.titleMedium,
-                    ),
-                  ],
-                ),
+              child: EmptyState(
+                icon: Icons.restaurant,
+                title: 'Aucun plat disponible',
+                message: 'Aucun plat dans cette catégorie pour le moment',
               ),
             )
           else
             SliverPadding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppTheme.spaceMd),
               sliver: SliverGrid(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   childAspectRatio: 0.75,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
+                  crossAxisSpacing: AppTheme.spaceMd,
+                  mainAxisSpacing: AppTheme.spaceMd,
                 ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final plat = _filteredPlats[index];
-                    final isSelected = _selectedPlats.contains(plat);
-                    return _buildPlatCard(plat, isSelected);
-                  },
-                  childCount: _filteredPlats.length,
-                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final plat = _filteredPlats[index];
+                  final isSelected = _selectedPlats.contains(plat);
+                  return AnimationConfiguration.staggeredGrid(
+                    position: index,
+                    duration: AppTheme.durationNormal,
+                    columnCount: 2,
+                    child: ScaleAnimation(
+                      child: FadeInAnimation(
+                        child: _buildPlatCard(plat, isSelected),
+                      ),
+                    ),
+                  );
+                }, childCount: _filteredPlats.length),
               ),
             ),
         ],
@@ -365,7 +357,9 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
     final colorScheme = theme.colorScheme;
 
     return Card(
-      elevation: isSelected ? AppTheme.cardElevation * 2 : AppTheme.cardElevation,
+      elevation: isSelected
+          ? AppTheme.cardElevation * 2
+          : AppTheme.cardElevation,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
         side: isSelected
@@ -374,7 +368,7 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
       ),
       child: InkWell(
         onTap: () => _togglePlatSelection(plat),
-  borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -391,12 +385,14 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                       colorScheme.secondaryContainer,
                     ],
                   ),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusLarge)),
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(AppTheme.radiusLarge),
+                  ),
                 ),
                 child: Stack(
                   children: [
                     Center(
-                        child: Icon(
+                      child: Icon(
                         _categoryIcons[plat.categorie] ?? Icons.restaurant,
                         size: 48,
                         color: Colors.white.withOpacity(0.5),
@@ -431,8 +427,12 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
                           child: Center(
                             child: Chip(
                               label: const Text('Indisponible'),
-                              backgroundColor: Theme.of(context).colorScheme.error,
-                              labelStyle: TextStyle(color: Theme.of(context).colorScheme.onError),
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.error,
+                              labelStyle: TextStyle(
+                                color: Theme.of(context).colorScheme.onError,
+                              ),
                             ),
                           ),
                         ),
@@ -445,7 +445,10 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
             Expanded(
               flex: 2,
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.only(
+                  left: AppTheme.spaceMd,
+                  right: AppTheme.spaceMd,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -498,7 +501,10 @@ class _MenuScreenState extends State<MenuScreen> with SingleTickerProviderStateM
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.primaryContainer],
+                colors: [
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.primaryContainer,
+                ],
               ),
             ),
             child: const Column(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/api_service.dart';
 import '../models/auth.dart';
+import '../widgets/custom_snackbar.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -52,20 +53,7 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
     if (!_formKey.currentState!.validate()) return;
 
     if (_passwordController.text != _confirmPasswordController.text) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.error_outline, color: Theme.of(context).colorScheme.onTertiary),
-                const SizedBox(width: 12),
-                const Text('Les mots de passe ne correspondent pas'),
-              ],
-            ),
-            backgroundColor: AppTheme.warning(context),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusSmall)),
-          ),
-        );
+      CustomSnackbar.warning(context, 'Les mots de passe ne correspondent pas');
       return;
     }
 
@@ -79,38 +67,12 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
       ));
 
       if (mounted) {
+        CustomSnackbar.success(context, 'Inscription réussie !');
         Navigator.pushReplacementNamed(context, '/menu');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle, color: Theme.of(context).colorScheme.onSecondary),
-                const SizedBox(width: 12),
-                const Text('Inscription réussie !'),
-              ],
-            ),
-            backgroundColor: AppTheme.success(context),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusSmall)),
-          ),
-        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.error_outline, color: Theme.of(context).colorScheme.onError),
-                const SizedBox(width: 12),
-                Expanded(child: Text(e.toString().replaceFirst('Exception: ', ''))),
-              ],
-            ),
-            backgroundColor: AppTheme.danger(context),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusSmall)),
-          ),
-        );
+        CustomSnackbar.error(context, e.toString().replaceFirst('Exception: ', ''));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

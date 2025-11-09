@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../models/reservation.dart';
 import '../services/api_service.dart';
+import '../theme/app_theme.dart';
+import '../widgets/loading_shimmer.dart';
+import '../widgets/empty_state.dart';
+import '../widgets/status_badge.dart';
+import '../widgets/custom_snackbar.dart';
 
 class MyReservationsScreen extends StatefulWidget {
   const MyReservationsScreen({super.key});
@@ -25,16 +31,16 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
     setState(() => _isLoading = true);
     try {
       final reservations = await _apiService.getUserReservations();
-      setState(() {
-        _reservations = reservations;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: ${e.toString()}')),
-        );
+        setState(() {
+          _reservations = reservations;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        CustomSnackbar.error(context, 'Erreur: ${e.toString()}');
       }
     }
   }
@@ -62,16 +68,12 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
       try {
         await _apiService.cancelReservation(reservationId);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Réservation annulée')),
-          );
+          CustomSnackbar.success(context, 'Réservation annulée avec succès');
         }
         _loadReservations();
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erreur: ${e.toString()}')),
-          );
+          CustomSnackbar.error(context, 'Erreur: ${e.toString()}');
         }
       }
     }
@@ -85,197 +87,167 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
     ).then((_) => _loadReservations());
   }
 
-  Color _getStatusColor(String statut) {
-    switch (statut) {
-      case 'EN_ATTENTE':
-        return Colors.orange;
-      case 'CONFIRMEE':
-        return Colors.green;
-      case 'ANNULEE':
-        return Colors.red;
-      case 'TERMINEE':
-        return Colors.grey;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  String _getStatusText(String statut) {
-    switch (statut) {
-      case 'EN_ATTENTE':
-        return 'En attente';
-      case 'CONFIRMEE':
-        return 'Confirmée';
-      case 'ANNULEE':
-        return 'Annulée';
-      case 'TERMINEE':
-        return 'Terminée';
-      default:
-        return statut;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mes Réservations'),
-        backgroundColor: Colors.deepOrange,
+        backgroundColor: colorScheme.primary,
+        foregroundColor: Colors.white,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const ReservationListShimmer()
           : _reservations.isEmpty
-              ? const Center(
-                  child: Text(
-                    'Aucune réservation',
-                    style: TextStyle(fontSize: 18),
-                  ),
+              ? EmptyState(
+                  icon: Icons.event_busy,
+                  title: 'Aucune réservation',
+                  message: 'Vous n\'avez pas encore de réservation.\nCommencez par parcourir notre menu!',
+                  actionLabel: 'Voir le menu',
+                  onActionPressed: () => Navigator.pushReplacementNamed(context, '/menu'),
                 )
               : RefreshIndicator(
                   onRefresh: _loadReservations,
-                  child: ListView.builder(
-                    itemCount: _reservations.length,
-                    padding: const EdgeInsets.all(16),
-                    itemBuilder: (context, index) {
-                      final reservation = _reservations[index];
-                      final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
-                      final canEdit = reservation.statut == 'EN_ATTENTE';
+                  child: AnimationLimiter(
+                    child: ListView.builder(
+                      itemCount: _reservations.length,
+                      padding: const EdgeInsets.all(AppTheme.spaceMd),
+                      itemBuilder: (context, index) {
+                        final reservation = _reservations[index];
+                        final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
+                        final canEdit = reservation.statut == 'EN_ATTENTE';
 
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Réservation #${reservation.id}',
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: _getStatusColor(reservation.statut),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      _getStatusText(reservation.statut),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
+                        return AnimationConfiguration.staggeredList(
+                          position: index,
+                          duration: AppTheme.durationNormal,
+                          child: SlideAnimation(
+                            verticalOffset: 50.0,
+                            child: FadeInAnimation(
+                              child: Card(
+                                margin: const EdgeInsets.only(bottom: AppTheme.spaceMd),
+                                elevation: AppTheme.elevationMd,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(AppTheme.spaceMd),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Header with ID and Status
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Réservation #${reservation.id}',
+                                            style: theme.textTheme.titleLarge?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          StatusBadge(status: reservation.statut),
+                                        ],
                                       ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  const Icon(Icons.calendar_today,
-                                      size: 16, color: Colors.grey),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    dateFormat.format(reservation.dateReservation),
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Icon(Icons.people,
-                                      size: 16, color: Colors.grey),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '${reservation.nombrePersonnes} personne(s)',
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Icon(Icons.email,
-                                      size: 16, color: Colors.grey),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      reservation.email,
-                                      style: const TextStyle(fontSize: 16),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Icon(Icons.phone,
-                                      size: 16, color: Colors.grey),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    reservation.telephone,
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
-                                ],
-                              ),
-                              if (reservation.commentaire != null) ...[
-                                const SizedBox(height: 8),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Icon(Icons.comment,
-                                        size: 16, color: Colors.grey),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        reservation.commentaire!,
-                                        style: const TextStyle(fontSize: 16),
+                                      const Divider(height: AppTheme.spaceLg),
+
+                                      // Date and Time
+                                      _buildInfoRow(
+                                        icon: Icons.calendar_today,
+                                        label: dateFormat.format(reservation.dateReservation),
+                                        theme: theme,
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(height: AppTheme.spaceSm),
+
+                                      // Number of people
+                                      _buildInfoRow(
+                                        icon: Icons.people,
+                                        label: '${reservation.nombrePersonnes} personne${reservation.nombrePersonnes > 1 ? 's' : ''}',
+                                        theme: theme,
+                                      ),
+                                      const SizedBox(height: AppTheme.spaceSm),
+
+                                      // Email
+                                      _buildInfoRow(
+                                        icon: Icons.email,
+                                        label: reservation.email,
+                                        theme: theme,
+                                      ),
+                                      const SizedBox(height: AppTheme.spaceSm),
+
+                                      // Phone
+                                      _buildInfoRow(
+                                        icon: Icons.phone,
+                                        label: reservation.telephone,
+                                        theme: theme,
+                                      ),
+
+                                      // Comment (if any)
+                                      if (reservation.commentaire != null) ...[
+                                        const SizedBox(height: AppTheme.spaceSm),
+                                        _buildInfoRow(
+                                          icon: Icons.comment,
+                                          label: reservation.commentaire!,
+                                          theme: theme,
+                                        ),
+                                      ],
+
+                                      // Action Buttons (if editable)
+                                      if (canEdit) ...[
+                                        const SizedBox(height: AppTheme.spaceMd),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.end,
+                                          children: [
+                                            OutlinedButton.icon(
+                                              onPressed: () => _editReservation(reservation),
+                                              icon: const Icon(Icons.edit),
+                                              label: const Text('Modifier'),
+                                            ),
+                                            const SizedBox(width: AppTheme.spaceSm),
+                                            FilledButton.tonalIcon(
+                                              onPressed: () => _cancelReservation(reservation.id),
+                                              icon: const Icon(Icons.cancel),
+                                              label: const Text('Annuler'),
+                                              style: FilledButton.styleFrom(
+                                                backgroundColor: colorScheme.errorContainer,
+                                                foregroundColor: colorScheme.error,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ],
+                                  ),
                                 ),
-                              ],
-                              if (canEdit) ...[
-                                const SizedBox(height: 16),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    TextButton.icon(
-                                      onPressed: () =>
-                                          _editReservation(reservation),
-                                      icon: const Icon(Icons.edit),
-                                      label: const Text('Modifier'),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    TextButton.icon(
-                                      onPressed: () =>
-                                          _cancelReservation(reservation.id),
-                                      icon: const Icon(Icons.cancel),
-                                      label: const Text('Annuler'),
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: Colors.red,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ],
+                              ),
+                            ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
                 ),
+    );
+  }
+
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String label,
+    required ThemeData theme,
+  }) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: AppTheme.iconSm,
+          color: theme.colorScheme.primary,
+        ),
+        const SizedBox(width: AppTheme.spaceMd),
+        Expanded(
+          child: Text(
+            label,
+            style: theme.textTheme.bodyLarge,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import '../models/reservation.dart';
+import '../theme/app_theme.dart';
+import '../widgets/custom_snackbar.dart';
 
 class ReservationScreen extends StatefulWidget {
   const ReservationScreen({super.key});
@@ -34,7 +36,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
-      firstDate: DateTime.now(),
+      firstDate: DateTime.now().add(const Duration(hours: 1)), // At least 1 hour from now
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (picked != null && picked != _selectedDate) {
@@ -59,6 +61,9 @@ class _ReservationScreenState extends State<ReservationScreen> {
   Future<void> _submitReservation() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Get arguments before any async operations to avoid context issues
+    final platIds = ModalRoute.of(context)!.settings.arguments as List<int>;
+
     setState(() => _isLoading = true);
 
     try {
@@ -66,8 +71,6 @@ class _ReservationScreenState extends State<ReservationScreen> {
       if (userId == null) {
         throw Exception('Utilisateur non connecté');
       }
-
-      final platIds = ModalRoute.of(context)!.settings.arguments as List<int>;
 
       final dateReservation = DateTime(
         _selectedDate.year,
@@ -77,10 +80,15 @@ class _ReservationScreenState extends State<ReservationScreen> {
         _selectedTime.minute,
       );
 
+      // Validate that the reservation date is in the future
+      if (dateReservation.isBefore(DateTime.now())) {
+        throw Exception('La date de réservation doit être dans le futur');
+      }
+
       final request = ReservationRequest(
         idClient: userId,
-        email: _emailController.text,
-        telephone: _telephoneController.text,
+        email: _emailController.text.trim(),
+        telephone: _telephoneController.text.trim(),
         dateReservation: dateReservation,
         nombrePersonnes: _nombrePersonnes,
         platIds: platIds,
@@ -92,21 +100,20 @@ class _ReservationScreenState extends State<ReservationScreen> {
       await _apiService.createReservation(request);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Réservation créée avec succès!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        CustomSnackbar.success(context, 'Réservation créée avec succès!');
         Navigator.pushNamedAndRemoveUntil(context, '/menu', (route) => false);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+        final errorMessage = e.toString().replaceFirst('Exception: ', '');
+        print('Full error in reservation screen: $errorMessage');
+
+        // Show detailed error to user
+        CustomSnackbar.error(
+          context,
+          errorMessage.length > 100
+            ? '${errorMessage.substring(0, 100)}...'
+            : errorMessage,
         );
       }
     } finally {
@@ -118,34 +125,63 @@ class _ReservationScreenState extends State<ReservationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Réservation'),
-        backgroundColor: Colors.deepOrange,
+        title: const Text('Nouvelle Réservation'),
+        backgroundColor: colorScheme.primary,
+        foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(AppTheme.spaceMd),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              // Header Card
+              Card(
+                color: colorScheme.primaryContainer,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppTheme.spaceMd),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: colorScheme.primary,
+                      ),
+                      const SizedBox(width: AppTheme.spaceMd),
+                      Expanded(
+                        child: Text(
+                          'Remplissez les informations ci-dessous pour confirmer votre réservation',
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppTheme.spaceLg),
+
+              // Contact Information Section
+              Text(
                 'Informations de contact',
-                style: TextStyle(
-                  fontSize: 20,
+                style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppTheme.spaceMd),
               TextFormField(
                 controller: _emailController,
                 decoration: const InputDecoration(
                   labelText: 'Email',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email),
+                  hintText: 'votre@email.com',
+                  prefixIcon: Icon(Icons.email_outlined),
                 ),
                 keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Veuillez entrer votre email';
@@ -156,15 +192,16 @@ class _ReservationScreenState extends State<ReservationScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppTheme.spaceMd),
               TextFormField(
                 controller: _telephoneController,
                 decoration: const InputDecoration(
                   labelText: 'Téléphone',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.phone),
+                  hintText: '+33 6 12 34 56 78',
+                  prefixIcon: Icon(Icons.phone_outlined),
                 ),
                 keyboardType: TextInputType.phone,
+                textInputAction: TextInputAction.next,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Veuillez entrer votre téléphone';
@@ -172,105 +209,192 @@ class _ReservationScreenState extends State<ReservationScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 24),
-              const Text(
+              const SizedBox(height: AppTheme.spaceLg),
+
+              // Date and Time Section
+              Text(
                 'Date et heure',
-                style: TextStyle(
-                  fontSize: 20,
+                style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 16),
-              Card(
-                child: ListTile(
-                  leading: const Icon(Icons.calendar_today),
-                  title: const Text('Date'),
-                  subtitle: Text(DateFormat('dd/MM/yyyy').format(_selectedDate)),
-                  onTap: _selectDate,
-                ),
+              const SizedBox(height: AppTheme.spaceMd),
+              Row(
+                children: [
+                  Expanded(
+                    child: Card(
+                      child: InkWell(
+                        onTap: _selectDate,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                        child: Padding(
+                          padding: const EdgeInsets.all(AppTheme.spaceMd),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.calendar_today, color: colorScheme.primary),
+                                  const SizedBox(width: AppTheme.spaceSm),
+                                  Text(
+                                    'Date',
+                                    style: theme.textTheme.labelLarge,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: AppTheme.spaceSm),
+                              Text(
+                                DateFormat('dd/MM/yyyy').format(_selectedDate),
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppTheme.spaceMd),
+                  Expanded(
+                    child: Card(
+                      child: InkWell(
+                        onTap: _selectTime,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                        child: Padding(
+                          padding: const EdgeInsets.all(AppTheme.spaceMd),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.access_time, color: colorScheme.primary),
+                                  const SizedBox(width: AppTheme.spaceSm),
+                                  Text(
+                                    'Heure',
+                                    style: theme.textTheme.labelLarge,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: AppTheme.spaceSm),
+                              Text(
+                                _selectedTime.format(context),
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              Card(
-                child: ListTile(
-                  leading: const Icon(Icons.access_time),
-                  title: const Text('Heure'),
-                  subtitle: Text(_selectedTime.format(context)),
-                  onTap: _selectTime,
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
+              const SizedBox(height: AppTheme.spaceLg),
+
+              // Number of People Section
+              Text(
                 'Nombre de personnes',
-                style: TextStyle(
-                  fontSize: 20,
+                style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppTheme.spaceMd),
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(AppTheme.spaceMd),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      IconButton(
+                      IconButton.filled(
                         icon: const Icon(Icons.remove),
                         onPressed: _nombrePersonnes > 1
                             ? () => setState(() => _nombrePersonnes--)
                             : null,
-                      ),
-                      Text(
-                        '$_nombrePersonnes',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                        style: IconButton.styleFrom(
+                          backgroundColor: colorScheme.primaryContainer,
+                          foregroundColor: colorScheme.onPrimaryContainer,
                         ),
                       ),
-                      IconButton(
+                      Column(
+                        children: [
+                          Text(
+                            '$_nombrePersonnes',
+                            style: theme.textTheme.displaySmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                          Text(
+                            'personne${_nombrePersonnes > 1 ? 's' : ''}',
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                      IconButton.filled(
                         icon: const Icon(Icons.add),
                         onPressed: _nombrePersonnes < 20
                             ? () => setState(() => _nombrePersonnes++)
                             : null,
+                        style: IconButton.styleFrom(
+                          backgroundColor: colorScheme.primaryContainer,
+                          foregroundColor: colorScheme.onPrimaryContainer,
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
-              const Text(
+              const SizedBox(height: AppTheme.spaceLg),
+
+              // Comment Section
+              Text(
                 'Commentaire (optionnel)',
-                style: TextStyle(
-                  fontSize: 20,
+                style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppTheme.spaceMd),
               TextFormField(
                 controller: _commentaireController,
                 decoration: const InputDecoration(
                   labelText: 'Commentaire',
-                  border: OutlineInputBorder(),
+                  hintText: 'Allergies, préférences...',
                   alignLabelWithHint: true,
+                  prefixIcon: Padding(
+                    padding: EdgeInsets.only(bottom: 60),
+                    child: Icon(Icons.comment_outlined),
+                  ),
                 ),
-                maxLines: 3,
+                maxLines: 4,
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: AppTheme.spaceXl),
+
+              // Submit Button
               SizedBox(
                 width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
+                child: FilledButton.icon(
                   onPressed: _isLoading ? null : _submitReservation,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepOrange,
+                  icon: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.check_circle),
+                  label: Text(
+                    _isLoading ? 'Création en cours...' : 'Confirmer la réservation',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                          'Confirmer la réservation',
-                          style: TextStyle(fontSize: 18, color: Colors.white),
-                        ),
                 ),
               ),
+              const SizedBox(height: AppTheme.spaceMd),
             ],
           ),
         ),

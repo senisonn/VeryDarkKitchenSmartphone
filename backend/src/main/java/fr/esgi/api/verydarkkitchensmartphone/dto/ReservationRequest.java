@@ -9,26 +9,26 @@ import java.util.List;
 @Builder
 public class ReservationRequest {
 
-    @NotBlank
+    @NotNull(message = "L'ID client est obligatoire")  
     private Long idClient;
 
-    @NotBlank
-    @Email
+    @NotBlank(message = "L'email est obligatoire")
+    @Email(message = "L'email doit être valide")
     private String email;
 
-    @NotBlank
+    @NotBlank(message = "Le téléphone est obligatoire")
     private String telephone;
 
-    @NotNull
-    @Future
+    @NotNull(message = "La date de réservation est obligatoire")
+    @Future(message = "La date doit être dans le futur")
     private LocalDateTime dateReservation;
 
-    @Min(1)
-    @Max(20)
+    @NotNull(message = "Le nombre de personnes est obligatoire")  
+    @Min(value = 1, message = "Minimum 1 personne")
+    @Max(value = 20, message = "Maximum 20 personnes")
     private Integer nombrePersonnes;
 
     private List<Long> platIds;
 
     private String commentaire;
 }
-

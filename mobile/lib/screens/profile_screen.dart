@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
+import '../widgets/empty_state.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -19,6 +20,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _totalReservations = 0;
   int _activeReservations = 0;
   bool _isLoading = true;
+  bool _isLoggedIn = false;
 
   @override
   void initState() {
@@ -30,27 +32,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getInt('userId');
+      final username = prefs.getString('username');
+
+      // Check if user is actually logged in
+      if (userId == null || username == null) {
+        setState(() {
+          _isLoggedIn = false;
+          _isLoading = false;
+        });
+        return;
+      }
 
       setState(() {
-        _username = prefs.getString('username') ?? 'Utilisateur';
+        _isLoggedIn = true;
+        _username = username;
         _email = prefs.getString('email') ?? '';
         _role = prefs.getString('role') ?? 'USER';
       });
 
-      if (userId != null) {
+      // Load reservations
+      try {
         final reservations = await _apiService.getUserReservations();
-        setState(() {
-          _totalReservations = reservations.length;
-          _activeReservations = reservations
-              .where((r) => r.statut == 'EN_ATTENTE' || r.statut == 'CONFIRMEE')
-              .length;
-          _isLoading = false;
-        });
-      } else {
-        setState(() => _isLoading = false);
+        if (mounted) {
+          setState(() {
+            _totalReservations = reservations.length;
+            _activeReservations = reservations
+                .where((r) => r.statut == 'EN_ATTENTE' || r.statut == 'CONFIRMEE')
+                .length;
+            _isLoading = false;
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
       }
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _isLoggedIn = false;
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -131,7 +154,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: CircularProgressIndicator(),
                     ),
                   )
-                : Column(
+                : !_isLoggedIn
+                    ? Padding(
+                        padding: const EdgeInsets.all(AppTheme.spaceMd),
+                        child: EmptyState(
+                          icon: Icons.person_off,
+                          title: 'Non connecté',
+                          message: 'Vous devez vous connecter pour accéder à votre profil',
+                          actionLabel: 'Se connecter',
+                          onActionPressed: () {
+                            Navigator.pushReplacementNamed(context, '/login');
+                          },
+                        ),
+                      )
+                    : Column(
                     children: [
                       const SizedBox(height: 8),
 

@@ -24,8 +24,9 @@ class ReservationRequest {
       'telephone': telephone,
       'dateReservation': dateReservation.toIso8601String(),
       'nombrePersonnes': nombrePersonnes,
-      'platIds': platIds,
-      'commentaire': commentaire,
+      'platIds': platIds, 
+      if (commentaire != null && commentaire!.isNotEmpty)
+        'commentaire': commentaire,
     };
   }
 }

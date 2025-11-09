@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/plat.dart';
@@ -95,21 +96,41 @@ class ApiService {
   Future<ReservationResponse> createReservation(ReservationRequest request) async {
     try {
       final token = await _getToken();
+      final requestBody = request.toJson();
+
+      // Debug logging
+      print('=== CREATE RESERVATION DEBUG ===');
+      print('URL: $baseUrl/reservations');
+      print('Request data: $requestBody');
+      print('Token exists: ${token != null}');
+      if (token != null && token.isNotEmpty) {
+        print('Token preview: ${token.substring(0, min(50, token.length))}...');
+        print('Token length: ${token.length}');
+      }
+
       final response = await http.post(
         Uri.parse('$baseUrl/reservations'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode(request.toJson()),
+        body: jsonEncode(requestBody),
       );
 
-      if (response.statusCode == 201) {
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      print('Response headers: ${response.headers}');
+      print('=== END DEBUG ===');
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
         return ReservationResponse.fromJson(jsonDecode(response.body));
       } else {
-        throw Exception(_extractErrorMessage(response, 'Échec de la création de la réservation'));
+        final errorMsg = _extractErrorMessage(response, 'Échec de la création de la réservation');
+        print('Error creating reservation: $errorMsg');
+        throw Exception(errorMsg);
       }
     } catch (e) {
+      print('Exception in createReservation: $e');
       if (e.toString().contains('Échec de la création')) {
         rethrow;
       }
@@ -125,6 +146,10 @@ class ApiService {
       throw Exception('Utilisateur non connecté');
     }
 
+    print('=== GET USER RESERVATIONS DEBUG ===');
+    print('URL: $baseUrl/reservations/user/$userId');
+    print('Token exists: ${token != null}');
+
     final response = await http.get(
       Uri.parse('$baseUrl/reservations/user/$userId'),
       headers: {
@@ -132,11 +157,15 @@ class ApiService {
       },
     );
 
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+    print('=== END DEBUG ===');
+
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
       return data.map((json) => ReservationResponse.fromJson(json)).toList();
     } else {
-      throw Exception('Échec du chargement des réservations');
+      throw Exception('Échec du chargement des réservations (${response.statusCode})');
     }
   }
 

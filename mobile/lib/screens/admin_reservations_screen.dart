@@ -34,9 +34,9 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erreur: ${e.toString()}')));
       }
     }
   }
@@ -47,7 +47,12 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Réservation approuvée', style: TextStyle(color: Theme.of(context).colorScheme.onSecondary)),
+            content: Text(
+              'Réservation approuvée',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSecondary,
+              ),
+            ),
             backgroundColor: AppTheme.success(context),
           ),
         );
@@ -55,9 +60,9 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
       _loadPendingReservations();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erreur: ${e.toString()}')));
       }
     }
   }
@@ -68,7 +73,10 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Réservation rejetée', style: TextStyle(color: Theme.of(context).colorScheme.onError)),
+            content: Text(
+              'Réservation rejetée',
+              style: TextStyle(color: Theme.of(context).colorScheme.onError),
+            ),
             backgroundColor: AppTheme.danger(context),
           ),
         );
@@ -76,9 +84,9 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
       _loadPendingReservations();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erreur: ${e.toString()}')));
       }
     }
   }
@@ -96,8 +104,9 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
               _buildDetailRow(
                 Icons.calendar_today,
                 'Date',
-                DateFormat('dd/MM/yyyy HH:mm')
-                    .format(reservation.dateReservation),
+                DateFormat(
+                  'dd/MM/yyyy HH:mm',
+                ).format(reservation.dateReservation),
               ),
               const SizedBox(height: 8),
               _buildDetailRow(
@@ -112,7 +121,10 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
               if (reservation.commentaire != null) ...[
                 const SizedBox(height: 8),
                 _buildDetailRow(
-                    Icons.comment, 'Commentaire', reservation.commentaire!),
+                  Icons.comment,
+                  'Commentaire',
+                  reservation.commentaire!,
+                ),
               ],
             ],
           ),
@@ -139,15 +151,9 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
             children: [
               Text(
                 label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                ),
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
-              Text(
-                value,
-                style: const TextStyle(fontSize: 16),
-              ),
+              Text(value, style: const TextStyle(fontSize: 16)),
             ],
           ),
         ),
@@ -171,162 +177,193 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _reservations.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.check_circle_outline,
-                        size: 64,
-                        color: Theme.of(context).colorScheme.secondary,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Aucune réservation en attente',
-                        style: TextStyle(fontSize: 18),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        onPressed: _loadPendingReservations,
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Actualiser'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.check_circle_outline,
+                    size: 64,
+                    color: Theme.of(context).colorScheme.secondary,
                   ),
-                )
-              : RefreshIndicator(
-                  onRefresh: _loadPendingReservations,
-                  child: ListView.builder(
-                    itemCount: _reservations.length,
-                    padding: const EdgeInsets.all(16),
-                    itemBuilder: (context, index) {
-                      final reservation = _reservations[index];
-                      final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Aucune réservation en attente',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: _loadPendingReservations,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Actualiser'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: _loadPendingReservations,
+              child: ListView.builder(
+                itemCount: _reservations.length,
+                padding: const EdgeInsets.all(16),
+                itemBuilder: (context, index) {
+                  final reservation = _reservations[index];
+                  final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
 
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        elevation: 4,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    elevation: 4,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Réservation #${reservation.id}',
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(context).colorScheme.primaryContainer,
-                                      borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-                                    ),
-                                    child: Text(
-                                      'En attente',
-                                      style: TextStyle(
-                                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                              Text(
+                                'Réservation #${reservation.id}',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                              const Divider(height: 24),
-                              Row(
-                                children: [
-                                  const Icon(Icons.calendar_today,
-                                      size: 16, color: Colors.grey),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    dateFormat
-                                        .format(reservation.dateReservation),
-                                    style: const TextStyle(fontSize: 16),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.primaryContainer,
+                                  borderRadius: BorderRadius.circular(
+                                    AppTheme.radiusLarge,
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Icon(Icons.people,
-                                      size: 16, color: Colors.grey),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '${reservation.nombrePersonnes} personne(s)',
-                                    style: const TextStyle(fontSize: 16),
+                                ),
+                                child: Text(
+                                  'En attente',
+                                  style: TextStyle(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimaryContainer,
+                                    fontSize: 12,
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Icon(Icons.person,
-                                      size: 16, color: Colors.grey),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      reservation.email,
-                                      style: const TextStyle(fontSize: 16),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  OutlinedButton.icon(
-                                    onPressed: () =>
-                                        _showReservationDetails(reservation),
-                                    icon: const Icon(Icons.info_outline),
-                                    label: const Text('Détails'),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: Theme.of(context).colorScheme.primary,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  ElevatedButton.icon(
-                                    onPressed: () =>
-                                        _rejectReservation(reservation.id),
-                                    icon: const Icon(Icons.close),
-                                    label: const Text('Refuser'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppTheme.danger(context),
-                                      foregroundColor: Theme.of(context).colorScheme.onError,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  ElevatedButton.icon(
-                                    onPressed: () =>
-                                        _approveReservation(reservation.id),
-                                    icon: const Icon(Icons.check),
-                                    label: const Text('Approuver'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppTheme.success(context),
-                                      foregroundColor: Theme.of(context).colorScheme.onSecondary,
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ],
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
+                          const Divider(height: 24),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.calendar_today,
+                                size: 16,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                dateFormat.format(reservation.dateReservation),
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.people,
+                                size: 16,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${reservation.nombrePersonnes} personne(s)',
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.person,
+                                size: 16,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  reservation.email,
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Wrap(
+                            alignment: WrapAlignment.end,
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              OutlinedButton.icon(
+                                onPressed: () =>
+                                    _showReservationDetails(reservation),
+                                icon: const Icon(Icons.info_outline, size: 18),
+                                label: const Text('Détails'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.primary,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                ),
+                              ),
+                              ElevatedButton.icon(
+                                onPressed: () =>
+                                    _rejectReservation(reservation.id),
+                                icon: const Icon(Icons.close, size: 18),
+                                label: const Text('Refuser'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.danger(context),
+                                  foregroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.onError,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                ),
+                              ),
+                              ElevatedButton.icon(
+                                onPressed: () =>
+                                    _approveReservation(reservation.id),
+                                icon: const Icon(Icons.check, size: 18),
+                                label: const Text('Approuver'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.success(context),
+                                  foregroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.onSecondary,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
     );
   }
 }
